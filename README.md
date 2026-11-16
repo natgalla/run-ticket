@@ -4,7 +4,6 @@ Autonomous ticket pipeline for Claude Code. Given a GitHub or Azure DevOps ticke
 
 ```
 /run-ticket <ticket-id> [--project <path>] [--base <branch>]
-/run-epic   <epic-id>   [--project <path>] [--max-parallel N]
 ```
 
 ## Pipeline stages
@@ -35,7 +34,6 @@ A BLOCK at any stage surfaces to the user and stops. Resume by running the same 
 | Skill | Description |
 |---|---|
 | `run-ticket` | Single-ticket pipeline |
-| `run-epic` | Fan-out orchestrator for multi-ticket epics |
 | `grill-autonomous` | Non-interactive AC interpreter, used internally by the pipeline |
 | `polish` | Quality loop: review → apply → tests → Playwright QA |
 | `best-practice` | Research a decision-bearing topic before committing to an approach |
@@ -91,13 +89,3 @@ The propose, verify, and archive stages integrate with [OpenSpec](https://github
 - `gh` CLI (GitHub projects) or `az` CLI (Azure DevOps)
 - Git
 
-## Run-epic
-
-`/run-epic` fans out per-ticket pipeline agents in parallel, up to `--max-parallel N` (default 4). It manages a dependency graph, holds tickets that share files with in-flight tickets, and batches BLOCK escalations into single human interruptions.
-
-State is written to `~/.claude/history/<project>/pipeline-state.json`. On restart, the orchestrator reads the state file and resumes from where each ticket left off.
-
-```
-/run-epic 12 --project /path/to/repo --max-parallel 3
-/run-epic --tickets 42,43,44 --project /path/to/repo
-```
