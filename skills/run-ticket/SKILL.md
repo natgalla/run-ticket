@@ -135,17 +135,17 @@ Surface the resume point in one line before proceeding: "Resuming from `<stage>`
 
 Run each stage in order. For each stage, if `--sidecar` was provided write stage updates atomically (write to `<sidecar>.tmp`, then `mv`). Fields to update per stage: `stage`, `stageStartedAt`, `stageCompletedAt`, `verdict`, `blocks`.
 
-**Critic invocations.** For each critic stage: read the matching section from `~/.claude/specs/critic-prompts.md` (Critic-0, Critic-1, or Critic-2) — this file is bundled as `critic-prompts.md` in this repo; install it to `~/.claude/specs/` per the README. Fill the template slots. Spawn a `skye` subagent with the filled prompt as its full prompt. Skye is context-blind — pass only the filled prompt. See README for Skye configuration. Parse Skye's first line for `VERDICT: PASS`, `VERDICT: REVISE`, or `VERDICT: BLOCK`. Write Skye's full output to a temp file (`/tmp/skye-<stage>-<TICKET_ID>.md`) immediately after the subagent returns. Hold only the VERDICT line in main context.
+**Critic invocations.** For each critic stage: read the matching section from `~/.claude/specs/critic-prompts.md` (Critic-0, Critic-1, or Critic-2) — this file is bundled as `critic-prompts.md` in this repo; install it to `~/.claude/specs/` per the README. Fill the template slots. Spawn a `critic` subagent with the filled prompt as its full prompt. The critic is context-blind — pass only the filled prompt. See README for the critic configuration. Parse the critic's first line for `VERDICT: PASS`, `VERDICT: REVISE`, or `VERDICT: BLOCK`. Write the critic's full output to a temp file (`/tmp/critic-<stage>-<TICKET_ID>.md`) immediately after the subagent returns. Hold only the VERDICT line in main context.
 
-**REVISE logic.** On REVISE: increment the revise count for that critic (track locally). Revise the artifact, threading Skye's full prior output into the revision brief. Re-run the critic with `ITERATION_GT_1` true, `ITERATION_N`, and `PRIOR_SKYE_OUTPUT` set. If the revise count for that critic reaches 2, treat the next REVISE as BLOCK.
+**REVISE logic.** On REVISE: increment the revise count for that critic (track locally). Revise the artifact, threading the critic's full prior output into the revision brief. Re-run the critic with `ITERATION_GT_1` true, `ITERATION_N`, and `PRIOR_CRITIC_OUTPUT` set. If the revise count for that critic reaches 2, treat the next REVISE as BLOCK.
 
-**BLOCK action.** On BLOCK (or REVISE after cap): if `--sidecar` was provided, write `stage = "blocked"`, `blocks = [<full Skye output>]` atomically, then return. If standalone, surface to the user with the full Skye output and the blocked artifact. Stop and wait for direction before resuming.
+**BLOCK action.** On BLOCK (or REVISE after cap): if `--sidecar` was provided, write `stage = "blocked"`, `blocks = [<full the critic output>]` atomically, then return. If standalone, surface to the user with the full the critic output and the blocked artifact. Stop and wait for direction before resuming.
 
 ---
 
 ### Grill
 
-Spawn a `claude` subagent that executes the `/grill-autonomous` skill on the ticket AC. Pass `PROJECT_DIR`, the ticket body, and the branch name in the subagent prompt. The subagent resolves all ambiguities internally via Skye and returns the path to the completed CONTEXT file. A BLOCK from Skye is the only condition that surfaces to the user — in that case, run the BLOCK action and stop. Do NOT invoke grill-autonomous via the Skill tool; spawning it as an Agent ensures the pipeline continues in this turn after the subagent returns.
+Spawn a `claude` subagent that executes the `/grill-autonomous` skill on the ticket AC. Pass `PROJECT_DIR`, the ticket body, and the branch name in the subagent prompt. The subagent resolves all ambiguities internally via the critic and returns the path to the completed CONTEXT file. A BLOCK from the critic is the only condition that surfaces to the user — in that case, run the BLOCK action and stop. Do NOT invoke grill-autonomous via the Skill tool; spawning it as an Agent ensures the pipeline continues in this turn after the subagent returns.
 
 <!-- Session history save point. If using context-historian, spawn the historian agent here (mode: SAVE) with ticket ID, branch name, CONTEXT file path, and a 2–3 sentence summary of what grill found. See README. -->
 
@@ -153,7 +153,7 @@ Spawn a `claude` subagent that executes the `/grill-autonomous` skill on the tic
 
 ### Critic-0
 
-Invoke Skye with the Critic-0 prompt. Inputs: `TICKET_BODY` = ticket body, `CONTEXT_MD` = grill output.
+Invoke the critic with the Critic-0 prompt. Inputs: `TICKET_BODY` = ticket body, `CONTEXT_MD` = grill output.
 
 On PASS: proceed to propose.
 On BLOCK: run BLOCK action.
@@ -185,7 +185,7 @@ Spawn a `claude` subagent (model: opus) that executes the `/opsx:propose` skill 
 
 ### Critic-1
 
-Invoke Skye with the Critic-1 prompt. Inputs: `CONTEXT_MD` = approved AC interpretation, `PROPOSAL` = proposal.
+Invoke the critic with the Critic-1 prompt. Inputs: `CONTEXT_MD` = approved AC interpretation, `PROPOSAL` = proposal.
 
 On PASS: proceed to implement.
 On BLOCK: run BLOCK action.
@@ -217,7 +217,7 @@ Get the full diff:
 git -C $PROJECT_DIR diff origin/$BASE_BRANCH...$BRANCH
 ```
 
-Invoke Skye with the Critic-2 prompt. Inputs: `CONTEXT_MD` = approved AC interpretation, `PROPOSAL` = approved proposal, `DIFF` = full diff.
+Invoke the critic with the Critic-2 prompt. Inputs: `CONTEXT_MD` = approved AC interpretation, `PROPOSAL` = approved proposal, `DIFF` = full diff.
 
 On PASS: proceed to verify.
 On BLOCK: run BLOCK action.
@@ -252,6 +252,6 @@ If `--sidecar` was provided: write `stage = "archive"` atomically after the suba
 
 ## Step 5 — Completion
 
-Clean up temp files: `rm -f /tmp/skye-*-<TICKET_ID>.md`
+Clean up temp files: `rm -f /tmp/critic-*-<TICKET_ID>.md`
 
 Surface to the user: PR URL, ticket number and title, wall time from branch creation to PR open.

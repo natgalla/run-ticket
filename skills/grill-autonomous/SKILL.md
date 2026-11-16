@@ -1,6 +1,6 @@
 ---
 name: grill-autonomous
-description: Autonomous AC interpretation for pipeline use. Identifies ambiguities, routes each to a Skye subagent for resolution, and produces CONTEXT.md without user interaction. BLOCKs only when Skye cannot reach a conclusion from code and standard practice.
+description: Autonomous AC interpretation for pipeline use. Identifies ambiguities, routes each to a critic subagent for resolution, and produces CONTEXT.md without user interaction. BLOCKs only when the critic cannot reach a conclusion from code and standard practice.
 argument-hint: "<ticket-body-or-ac>"
 model: sonnet
 effort: high
@@ -8,7 +8,7 @@ effort: high
 
 # Grill Autonomous
 
-Non-interactive AC interpretation for the `/run-ticket` and `/run-epic` pipelines. Produces the same `CONTEXT-<BRANCH>.md` output contract as `/grill-with-docs` but routes all ambiguity resolution to a Skye subagent rather than the user. The user is not consulted.
+Non-interactive AC interpretation for the `/run-ticket` and `/run-epic` pipelines. Produces the same `CONTEXT-<BRANCH>.md` output contract as `/grill-with-docs` but routes all ambiguity resolution to a critic subagent rather than the user. The user is not consulted.
 
 ## Setup
 
@@ -22,22 +22,22 @@ Write a 3–5 sentence plain-English summary of what is being built: the problem
 
 Read the seed and any existing CONTEXT file. Find every ambiguity — vague nouns, implicit scope, conflicting signals, unmeasured criteria, one-way decisions hiding in plain sight.
 
-For each candidate, apply a reasoning pass first. Resolve it immediately (without Skye) if it can be answered from:
+For each candidate, apply a reasoning pass first. Resolve it immediately (without the critic) if it can be answered from:
 - The seed itself
 - The existing CONTEXT file
 - Codebase reading (files, types, existing conventions)
 - Standard engineering practice with no genuine alternative
 
-Log every self-resolved item in an internal inference list with a one-line rationale. Only ambiguities that survive the reasoning pass — those where two or more reasonable conclusions exist and the codebase does not clearly prefer one — proceed to Skye.
+Log every self-resolved item in an internal inference list with a one-line rationale. Only ambiguities that survive the reasoning pass — those where two or more reasonable conclusions exist and the codebase does not clearly prefer one — proceed to the critic.
 
-## Resolve via Skye
+## Resolve via the critic
 
-For each surviving ambiguity, spawn a `skye` subagent with the following prompt template. Skye is context-blind — pass only what is in the template. Do not pass session history or prior conversation. See README for Skye configuration.
+For each surviving ambiguity, spawn a `critic` subagent with the following prompt template. The critic is context-blind — pass only what is in the template. Do not pass session history or prior conversation. See README for the critic configuration.
 
 ---
 
 ```
-You are Skye — an adversarial reviewer operating as a decision-resolver, not a critic. You are context-blind: you know only what is in this prompt.
+You are the critic — an adversarial reviewer operating as a decision-resolver, not a critic. You are context-blind: you know only what is in this prompt.
 
 Your job is to resolve the ambiguity below by reading the codebase and applying product reasoning. Reach a definite conclusion wherever one is justified. Do not hedge when the evidence is clear.
 
@@ -84,10 +84,10 @@ Nothing else. No questions. No alternatives unless the reasoning requires naming
 
 ---
 
-Parse Skye's first line:
+Parse the critic's first line:
 
-- `DECISION:` — the ambiguity is resolved. Record the decision and Skye's reasoning in the inference list.
-- `BLOCK:` — escalate to the user with the question, the ticket body, and Skye's full output. Stop the pipeline.
+- `DECISION:` — the ambiguity is resolved. Record the decision and the critic's reasoning in the inference list.
+- `BLOCK:` — escalate to the user with the question, the ticket body, and the critic's full output. Stop the pipeline.
 
 ## Write CONTEXT.md
 
@@ -95,7 +95,7 @@ After all ambiguities are resolved, write `CONTEXT-<BRANCH>.md`. The file has th
 
 ### `## Language`
 
-One entry per term that required definition — either self-resolved or Skye-resolved:
+One entry per term that required definition — either self-resolved or critic-resolved:
 
 ```
 **<Term>**:
@@ -117,7 +117,7 @@ Create an ADR only when all three conditions hold: the decision is hard to rever
 
 ### `## Inference`
 
-Every decision made without asking the user — whether self-resolved or Skye-resolved:
+Every decision made without asking the user — whether self-resolved or critic-resolved:
 
 ```
 **<Topic>**: <Decision reached.> — <one-line rationale citing evidence or principle>
@@ -129,4 +129,4 @@ This section is the audit trail. It must be complete: every ambiguity from the s
 
 Return the absolute path to `CONTEXT-<BRANCH>.md`. Confirm it is ready to pass to the proposal stage.
 
-If any ambiguity resulted in a BLOCK, do not write the CONTEXT file. Surface the block to the user with the full Skye output and halt.
+If any ambiguity resulted in a BLOCK, do not write the CONTEXT file. Surface the block to the user with the full the critic output and halt.

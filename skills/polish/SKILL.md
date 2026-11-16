@@ -95,9 +95,9 @@ If running: delegate to the `/verify` skill to exercise the changed functionalit
 Skill("verify")
 ```
 
-## Skye Review
+## Critic Review
 
-After QA (or after Tests if QA was skipped), run a final Skye pass. See README for Skye configuration.
+After QA (or after Tests if QA was skipped), run a final critic pass. See README for the critic configuration.
 
 Get the full branch diff:
 
@@ -105,11 +105,11 @@ Get the full branch diff:
 git diff $(git merge-base HEAD main)...HEAD
 ```
 
-Before spawning Skye, collect the following:
+Before spawning the critic, collect the following:
 - The full branch diff (from the command above)
 - The approved plan or ticket AC, if one exists. Check in order: a PLAN.md in the repo root, the proposal file from the propose stage, or the ticket AC extracted during ticket setup. If none is available, note that no plan reference exists.
 
-Spawn the `skye` subagent. Skye is context-blind — pass only what it needs:
+Spawn the `critic` subagent. The critic is context-blind — pass only what it needs:
 
 > Here is the full diff for this branch. [If a plan exists: Here is the approved plan / ticket AC it was built against.] Ask the questions that surface what's being missed — gaps in the implementation, intent drift from the plan, unchecked assumptions, or design choices that could bite us later.
 >
@@ -117,7 +117,7 @@ Spawn the `skye` subagent. Skye is context-blind — pass only what it needs:
 >
 > [paste approved plan / ticket AC here, or note "no plan reference available"]
 
-Collect Skye's output. Do not act on it — it is advisory. Carry it into the completion summary.
+Collect the critic's output. Do not act on it — it is advisory. Carry it into the completion summary.
 
 ## Completion
 
@@ -127,6 +127,6 @@ Surface to the user once, with:
 - Test result (pass/fail, count)
 - Whether QA ran, and if so, whether it passed or flagged anything
 - Any design forks that were surfaced and how they were resolved
-- Skye's findings, if any (advisory — the user decides what to act on)
+- the critic's findings, if any (advisory — the user decides what to act on)
 
 If tests or QA flag a failure, stop — do not push. Surface the failure and wait for direction.

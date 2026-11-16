@@ -15,7 +15,7 @@ grill → critic-0 → best-practice → propose → critic-1
 
 | Stage | What happens |
 |---|---|
-| **grill** | Interprets the AC, resolves ambiguities via Skye, produces `CONTEXT-<branch>.md` |
+| **grill** | Interprets the AC, resolves ambiguities via the critic, produces `CONTEXT-<branch>.md` |
 | **critic-0** | Adversarial review of the AC interpretation |
 | **best-practice** | Research pass on decision-bearing topics found in the AC |
 | **propose** | Produces a proposal (integrates with OpenSpec if present) |
@@ -67,13 +67,13 @@ If `--project` is omitted and no alias map is configured, the pipeline falls bac
 
 The implement stage looks for `~/.claude/engineering-context.md` to inject into the opus agent brief. Create this file with any project-wide conventions, tech stack notes, or constraints you want the agent to carry. If the file is absent, the agent uses only the proposal and the project's own `CLAUDE.md`.
 
-### Skye — the adversarial reviewer
+### Critic — the adversarial reviewer
 
-The critic stages and `grill-autonomous` spawn a subagent named `skye`. Skye is a context-blind adversarial reviewer — it receives only what the caller passes and has no session history.
+The critic stages and `grill-autonomous` spawn a subagent named `critic`. The critic is a context-blind adversarial reviewer — it receives only what the caller passes and has no session history.
 
-Define it in `~/.claude/CLAUDE.md` as a custom agent type, or register it in your harness's agent definitions. The critic prompts are in `critic-prompts.md` — they form the full system prompt. Skye's job is to find gaps, not to agree.
+Define it in `~/.claude/CLAUDE.md` as a custom agent type, or register it in your harness's agent definitions. The critic prompts are in `critic-prompts.md` — they form the full system prompt. Its job is to find gaps, not to agree.
 
-If your harness does not support named agent types, replace `subagent_type: "skye"` with `subagent_type: "claude"` and prepend the relevant critic prompt as a system message.
+If your harness does not support named agent types, replace `subagent_type: "critic"` with `subagent_type: "claude"` and prepend the relevant critic prompt as a system message.
 
 ### Session history (optional)
 
