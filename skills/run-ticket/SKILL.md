@@ -147,18 +147,12 @@ Run each stage in order. For each stage, if `--sidecar` was provided write stage
 
 Spawn a `claude` subagent that executes the `/grill-autonomous` skill on the ticket AC. Pass `PROJECT_DIR`, the ticket body, and the branch name in the subagent prompt. The subagent resolves all ambiguities internally via the critic and returns the path to the completed CONTEXT file. A BLOCK from the critic is the only condition that surfaces to the user — in that case, run the BLOCK action and stop. Do NOT invoke grill-autonomous via the Skill tool; spawning it as an Agent ensures the pipeline continues in this turn after the subagent returns.
 
-<!-- Session history save point. If using context-historian, spawn the historian agent here (mode: SAVE) with ticket ID, branch name, CONTEXT file path, and a 2–3 sentence summary of what grill found. See README. -->
-
-[Save point 1: after grill.]
-
 ### Critic-0
 
 Invoke the critic with the Critic-0 prompt. Inputs: `TICKET_BODY` = ticket body, `CONTEXT_MD` = grill output.
 
 On PASS: proceed to propose.
 On BLOCK: run BLOCK action.
-
-<!-- Session history save point on BLOCK. See README. -->
 
 ### Best Practice
 
@@ -190,8 +184,6 @@ Invoke the critic with the Critic-1 prompt. Inputs: `CONTEXT_MD` = approved AC i
 On PASS: proceed to implement.
 On BLOCK: run BLOCK action.
 
-<!-- Session history save point on BLOCK. See README. -->
-
 ### Implement
 
 Spawn an opus worktree agent (`isolation: "worktree"`, `model: "opus"`, `subagent_type: "claude"`) to implement the approved proposal on `BRANCH`. Brief it with the proposal, the AC, the branch name, and `~/.claude/engineering-context.md` if it exists (see README). Tell it to run `/code-review` at low effort after each task.
@@ -205,10 +197,6 @@ If empty, merge or cherry-pick from the worktree branch onto `BRANCH` before con
 ### Polish
 
 Spawn a `claude` subagent to run `/polish` on `BRANCH`. Pass the branch name and `PROJECT_DIR`. The subagent returns only the completion summary (review passes, test result, QA result, any design forks). Do not run `/polish` via the Skill tool inline.
-
-<!-- Session history save point after implement + polish. Include: ticket ID and title, branch name and commit hash, what was built, key decisions from CONTEXT and proposal, test result, review pass result. See README. -->
-
-[Save point 4: after implement + polish.]
 
 ### Critic-2
 
@@ -234,10 +222,6 @@ Spawn a `claude` subagent to run `/ready-for-review`. The subagent returns the P
 
 If `--sidecar` was provided: write `stage = "pr-ready"`, `pr = <URL>` atomically.
 
-<!-- Session history save point after pr-ready. See README. -->
-
-[Save point 5: after pr-ready.]
-
 ### Archive
 
 If the repo uses OpenSpec (an `openspec/` directory exists at `PROJECT_DIR`) and an active proposal exists under `openspec/changes/<CHANGE_NAME>/` for this ticket: spawn a `claude` subagent to run `/opsx:archive` for that change. Do not run `/opsx:archive` via the Skill tool inline. The subagent returns the archive path and any follow-up commit it made to fold spec deltas into canonical specs.
@@ -245,10 +229,6 @@ If the repo uses OpenSpec (an `openspec/` directory exists at `PROJECT_DIR`) and
 If OpenSpec is not in use or no active proposal exists for this ticket, skip silently.
 
 If `--sidecar` was provided: write `stage = "archive"` atomically after the subagent returns.
-
-<!-- Session history save point after archive. Include: ticket ID and title, branch name and PR URL, one-sentence summary of what shipped, OpenSpec change name and archive path (or "no OpenSpec"), key decisions from the full pipeline. See README. -->
-
-[Save point 6: after archive.]
 
 ## Step 5 — Completion
 
