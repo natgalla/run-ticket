@@ -255,3 +255,5 @@ If `--sidecar` was provided: write `stage = "archive"` atomically after the suba
 Clean up temp files: `rm -f /tmp/critic-*-<TICKET_ID>.md`
 
 Surface to the user: PR URL, ticket number and title, wall time from branch creation to PR open.
+
+<!-- Session history save point. If using context-historian, spawn the historian agent here (mode: SAVE, run_in_background: true) with the project directory. The historian reads the session transcript and handles the rest. See README. -->
