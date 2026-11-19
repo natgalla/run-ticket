@@ -9,8 +9,8 @@ Autonomous ticket pipeline for Claude Code. Given a GitHub or Azure DevOps ticke
 ## Pipeline stages
 
 ```
-grill → critic-0 → best-practice → propose → critic-1
-      → implement → polish → critic-2 → verify → pr-ready → archive
+grill → (critic-0 ‖ best-practice) → propose → critic-1
+       → implement → polish → critic-2 → verify → (pr-ready ‖ archive)
 ```
 
 | Stage | What happens |
